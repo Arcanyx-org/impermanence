@@ -57,6 +57,8 @@ let
 
   cfg = config.environment.persistence;
 
+  enableCfg = config.boot.impermanence.enable;
+
   # All persistent storage path submodule values zipped together into
   # one set. This includes paths from the Home Manager persistence
   # module and `users` submodules.
@@ -82,7 +84,6 @@ let
         filter (v: v.enable) paths;
     in
     zipAttrsWith (_: flatten) (nixos ++ nixosUsers ++ homeManager);
-
   inherit (allPersistentStoragePaths) files directories;
 
   mountFile = pkgs.runCommand "persistence-mount-file" { buildInputs = [ pkgs.bash ]; } ''
@@ -113,6 +114,15 @@ let
 in
 {
   options = {
+
+    boot.impermanence.enable = mkOption {
+      type = types.bool;
+      description = ''
+        Whether to enable impermanence.
+      '';
+      default = false;
+    };
+
     environment.persistence = mkOption {
       default = { };
       type =
@@ -225,12 +235,11 @@ in
       (lib.optionalAttrs (options ? home-manager.sharedModules) {
         home-manager.sharedModules = [
           ./home-manager.nix
-          {
             home._nixosModuleImported = true;
           }
         ];
       })
-      (mkIf (allPersistentStoragePaths != { })
+      (mkIf (enableCfg && allPersistentStoragePaths != { })
         (mkMerge [
           {
             systemd.services =

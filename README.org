@@ -195,17 +195,13 @@
     attribute set of submodules, where the attribute name is the path
     to persistent storage.
 
-    Note that this project has ~nixpkgs~ and ~home-manager~ as dependencies for
-    development, but these are not needed when using the module. If these extra
-    dependencies appearing in your ~flake.lock~ bother you, you can remove them
-    like this:
+    The impermanence module is **disabled** by default to enable programming logic for complex setups and has to be globally enabled when imported. To enable impermanence, use:
 
     #+begin_src nix
-    inputs = {
-      impermanence.url = "github:nix-community/impermanence";
-      impermanence.inputs.nixpkgs.follows = "";
-      impermanence.inputs.home-manager.follows = "";
-    };
+      {
+        boot.impermanence.enable = false;
+      }
+    #+end_src
     #+end_src
 
     Usage is shown best with an example:
