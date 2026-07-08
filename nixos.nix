@@ -278,7 +278,11 @@ in
                    before = [ "initrd-nixos-activation.service" ];
                    where = concatPaths [ "/sysroot" dirPath ];
                    what = concatPaths [ "/sysroot" persistentStoragePath sourcePath ];
-                  unitConfig.DefaultDependencies = false;
+                  unitConfig = {
+                    DefaultDependencies = false;
+                    # Ensure persistent storage subvolume is mounted first
+                    RequiresMountsFor = [ persistentStoragePath ];
+                  };
                   type = "none";
                   options = concatStringsSep "," ([
                     "bind"
@@ -299,7 +303,10 @@ in
                    before = [ "local-fs.target" ];
                    where = concatPaths [ "/" dirPath ];
                    what = concatPaths [ persistentStoragePath sourcePath ];
-                  unitConfig.DefaultDependencies = false;
+                  unitConfig = {
+                    DefaultDependencies = false;
+                    RequiresMountsFor = [ persistentStoragePath ];
+                  };
                   type = "none";
                   options = concatStringsSep "," ([
                     "bind"
