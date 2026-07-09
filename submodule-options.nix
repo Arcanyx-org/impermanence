@@ -77,6 +77,14 @@ let
         internal = true;
         default = [ ];
       };
+      stripHomePrefix = mkOption {
+        type = bool;
+        default = false;
+        internal = true;
+        description = ''
+          Inherited from the store level.
+        '';
+      };
     };
   };
   dirPermsOpts = {
@@ -175,6 +183,19 @@ let
       dirPath = mkOption {
         type = path;
         internal = true;
+      };
+      sourcePath = mkOption {
+        type = str;
+        internal = true;
+        default =
+          if config.stripHomePrefix && config.home != null then
+            config.directory
+          else
+            config.dirPath;
+        description = ''
+          Path relative to persistentStoragePath, with home
+          prefix stripped if stripHomePrefix is enabled.
+        '';
       };
     } // dirPermsOpts;
   };
@@ -288,6 +309,18 @@ in
         type = listOf unspecified;
         internal = true;
         default = [ ];
+      };
+
+      stripHomePrefix = mkOption {
+        type = bool;
+        default = false;
+        description = ''
+          Strip the home directory prefix from persistent storage
+          paths. When enabled, a home-manager user's
+          <literal>Desktop</literal> directory will be stored at
+          <literal>persistentStoragePath/Desktop</literal> instead of
+          <literal>persistentStoragePath/home/‹user›/Desktop</literal>.
+        '';
       };
     } //
     optionalAttrs (!usersOpts)

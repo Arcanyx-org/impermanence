@@ -91,10 +91,11 @@ let
     patchShebangs $out
   '';
 
-  mkPersistFile = { filePath, persistentStoragePath, method, enableDebugging, ... }:
+  mkPersistFile = { filePath, persistentStoragePath, method, enableDebugging, stripHomePrefix, home, file, ... }:
     let
       mountPoint = filePath;
-      targetFile = concatPaths [ persistentStoragePath filePath ];
+      sourcePath = if stripHomePrefix && home != null then file else filePath;
+      targetFile = concatPaths [ persistentStoragePath sourcePath ];
       args = escapeShellArgs [
         mountPoint
         targetFile
@@ -244,9 +245,10 @@ in
           {
             systemd.services =
               let
-                mkPersistFileService = { filePath, persistentStoragePath, ... }@args:
+                mkPersistFileService = { filePath, persistentStoragePath, stripHomePrefix, home, file, ... }@args:
                   let
-                    targetFile = concatPaths [ persistentStoragePath filePath ];
+                    sourcePath = if stripHomePrefix && home != null then file else filePath;
+                    targetFile = concatPaths [ persistentStoragePath sourcePath ];
                     mountPoint = escapeShellArg filePath;
                   in
                   {
@@ -277,11 +279,11 @@ in
 
             boot.initrd.systemd.mounts =
               let
-                mkBindMount = { dirPath, persistentStoragePath, hideMount, allowTrash, ... }: {
+                mkBindMount = { dirPath, persistentStoragePath, hideMount, allowTrash, sourcePath, ... }: {
                   wantedBy = [ "initrd.target" ];
                   before = [ "initrd-nixos-activation.service" ];
                   where = concatPaths [ "/sysroot" dirPath ];
-                  what = concatPaths [ "/sysroot" persistentStoragePath dirPath ];
+                  what = concatPaths [ "/sysroot" persistentStoragePath sourcePath ];
                   unitConfig.DefaultDependencies = false;
                   type = "none";
                   options = concatStringsSep "," ([
@@ -298,11 +300,11 @@ in
 
             systemd.mounts =
               let
-                mkBindMount = { dirPath, persistentStoragePath, hideMount, allowTrash, ... }: {
+                mkBindMount = { dirPath, persistentStoragePath, hideMount, allowTrash, sourcePath, ... }: {
                   wantedBy = [ "local-fs.target" ];
                   before = [ "local-fs.target" ];
                   where = concatPaths [ "/" dirPath ];
-                  what = concatPaths [ persistentStoragePath dirPath ];
+                  what = concatPaths [ persistentStoragePath sourcePath ];
                   unitConfig.DefaultDependencies = false;
                   type = "none";
                   options = concatStringsSep "," ([
@@ -334,11 +336,13 @@ in
                   , mode
                   , enableDebugging
                   , ...
-                  }:
+                  } @ args:
                   let
-                    args = [
+                    # Use sourcePath when available (stripHomePrefix), fall back to dirPath
+                    resolvePath = args.sourcePath or dirPath;
+                    finalArgs = [
                       persistentStoragePath
-                      dirPath
+                      resolvePath
                       user
                       # Home Manager doesn't seem to know about the user's group
                       (if group == null then users.${user}.group else group)
@@ -347,11 +351,11 @@ in
                     ];
                   in
                   ''
-                    ${createDirectories} ${escapeShellArgs args}
-                  '';
+                    ${createDirectories} ${escapeShellArgs finalArgs}
+                   '';
 
-                # Build an activation script which creates all persistent
-                # storage directories we want to bind mount.
+                 # Build an activation script which creates all persistent
+                 # storage directories we want to bind mount.
                 dirCreationScript =
                   let
                     # The parent directories of files.
@@ -376,6 +380,7 @@ in
                             homeDir = {
                               directory = dir.home;
                               dirPath = dir.home;
+                              sourcePath = dir.home;
                               home = null;
                               mode = "0700";
                               user = dir.user;
@@ -404,6 +409,7 @@ in
                             persistentStorageDir = {
                               directory = dir.persistentStoragePath;
                               dirPath = dir.persistentStoragePath;
+                              sourcePath = dir.persistentStoragePath;
                               persistentStoragePath = "";
                               home = null;
                               inherit (dir) defaultPerms enableDebugging;
@@ -434,6 +440,11 @@ in
                               concatPaths [ dir.home path ]
                             else
                               path;
+                          sourcePath =
+                            if (dir.stripHomePrefix or false) && dir.home != null then
+                              path
+                            else
+                              dirPath;
                           inherit (dir) persistentStoragePath home enableDebugging;
                           inherit (dir.defaultPerms) user group mode;
                         };
