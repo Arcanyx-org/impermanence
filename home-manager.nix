@@ -7,6 +7,8 @@
 }:
 
 let
+  inherit (builtins) length;
+
   inherit (lib)
     mkOption
     mkIf
@@ -15,6 +17,14 @@ let
     any
     hasInfix
     attrValues
+    filterAttrs
+    mapAttrsToList
+    flatten
+    unique
+    splitString
+    genList
+    take
+    concatStringsSep
     ;
 
   inherit (types)
@@ -73,5 +83,25 @@ in
         '';
       }
     ];
+
+    # Create ephemeral target directories for all persistence entries during
+    # HM activation, before any program (like dconf) tries to write to them.
+    # This eliminates the need for manual tmpfiles.rules boilerplate in
+    # user or machine configs.
+    home.activation.impermanenceCreateParentDirs = lib.hm.dag.entryBefore [ "writeBoundary" ] (
+      let
+        allItemPaths = flatten (mapAttrsToList (storeName: storeCfg:
+          (map (d: d.directory) (storeCfg.directories or [])) ++
+          (map (f: builtins.dirOf f.file) (storeCfg.files or []))
+        ) (filterAttrs (name: s: s.enable) cfg));
+
+        allParentPaths = unique (flatten (map (p:
+          let parts = splitString "/" p;
+          in genList (i: concatStringsSep "/" (take (i + 1) parts)) (length parts)
+        ) allItemPaths));
+      in concatStringsSep "\n" (map (path: ''
+        install -d -m 0700 "''${HOME}/${path}"
+      '') allParentPaths)
+    );
   };
 }
