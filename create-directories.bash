@@ -28,8 +28,8 @@ trap 'echo Error when executing ${BASH_COMMAND} at line ${LINENO}! >&2' ERR
 #   3. Copy the mode of the source path to the target path
 
 # Get inputs from command line arguments
-if [[ $# != 8 ]]; then
-    printf "Error: 'create-directories.bash' requires *eight* args.\n" >&2
+if [[ $# != 7 ]]; then
+    printf "Error: 'create-directories.bash' requires *seven* args.\n" >&2
     exit 1
 fi
 sourceBase="$1"
@@ -39,7 +39,6 @@ group="$4"
 mode="$5"
 debug="$6"
 homeDir="$7"
-unused="$8"
 
 if (( debug )); then
     set -o xtrace

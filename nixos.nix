@@ -351,7 +351,6 @@ mkDirWithPerms =
                        mode
                        enableDebugging
                        home
-                       "unused"
                      ];
                    in
 					''
