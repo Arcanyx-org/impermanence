@@ -100,7 +100,7 @@ in
           in genList (i: concatStringsSep "/" (take (i + 1) parts)) (length parts)
         ) allItemPaths));
       in concatStringsSep "\n" (map (path: ''
-        install -d -m 0700 "''${HOME}/${path}"
+        test -d "''${HOME}/${path}" || mkdir -m 0700 "''${HOME}/${path}"
       '') allParentPaths)
     );
   };
