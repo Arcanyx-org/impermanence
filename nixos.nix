@@ -330,7 +330,7 @@ in
 				text = builtins.readFile ./create-directories.bash;
 			};
 
-                mkDirWithPerms =
+mkDirWithPerms =
                    { dirPath
                    , sourcePath ? dirPath
                    , persistentStoragePath
@@ -338,19 +338,22 @@ in
                    , group
                    , mode
                    , enableDebugging
+                   , home
                    , ...
                    }:
                    let
                      args = [
                        persistentStoragePath
                        sourcePath
-                      user
-                      # Home Manager doesn't seem to know about the user's group
-                      (if group == null then users.${user}.group else group)
-                      mode
-                      enableDebugging
-                    ];
-                  in
+                       user
+                       # Home Manager doesn't seem to know about the user's group
+                       (if group == null then users.${user}.group else group)
+                       mode
+                       enableDebugging
+                       home
+                       "unused"
+                     ];
+                   in
 					''
 					    ${createDirectories}/bin/persistence-create-directories ${escapeShellArgs args}
 					  '';
