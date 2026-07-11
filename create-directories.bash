@@ -53,9 +53,15 @@ if [[ ! -d $realSource ]]; then
 fi
 
 if [[ $sourceBase ]]; then
-    [[ -d $target ]] || mkdir "$target"
+    # target may be relative (e.g. ".config/dconf"). When it is, prepend
+    # the user's home directory so mkdir works regardless of CWD.
+    case "$target" in
+        /*) absTarget="$target" ;;
+        *)  absTarget="$HOME/$target" ;;
+    esac
+    [[ -d $absTarget ]] || mkdir -p "$absTarget"
 
     # synchronize perms between source and target
-    chown --reference="$realSource" "$target"
-    chmod --reference="$realSource" "$target"
+    chown --reference="$realSource" "$absTarget"
+    chmod --reference="$realSource" "$absTarget"
 fi
