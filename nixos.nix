@@ -435,7 +435,7 @@ in
                         mkParent = dir: path: {
                            directory = path;
                            dirPath =
-                             if dir.home != null && !(dir.stripHomePrefix or false) then
+                             if dir.home != null then
                                concatPaths [ dir.home path ]
                              else
                                path;
