@@ -187,10 +187,10 @@ let
       # default permissions unaffected by the
       # directory's own.
       defaultPerms = mapAttrs (_: x: x // { internal = true; }) dirPermsOpts;
-      dirPath = mkOption {
-        type = path;
-        internal = true;
-      };
+	dirPath = mkOption {
+		type = str;
+		internal = true;
+	};
       sourcePath = mkOption {
         type = str;
         internal = true;
