@@ -51,6 +51,13 @@ if [[ ! -d $realSource ]]; then
     printf "Warning: Source directory '%s' does not exist; it will be created for you with the following permissions: owner: '%s:%s', mode: '%s'.\n" "$realSource" "$user" "$group" "$mode"
     mkdir --mode="$mode" "$realSource"
     chown "$user:$group" "$realSource"
+else
+    # Ensure existing persistent storage directories are owned by the
+    # expected user/group and have the expected mode. Dirs may have been
+    # created by mount-file.bash as root (drwxr-xr-x root root) on a prior
+    # boot, leaving the user unable to write into their own persistent tree.
+    chown "$user:$group" "$realSource"
+    chmod "$mode" "$realSource"
 fi
 
 if [[ $sourceBase ]]; then
