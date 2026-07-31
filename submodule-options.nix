@@ -214,7 +214,7 @@ let
           dirPath = if config.stripHomePrefix then directory else concatPaths [ parentPath directory ];
           sourcePath = if config.stripHomePrefix then directory else concatPaths [ parentPath directory ];
           inherit directory defaultPerms;
-          inherit (config) home persistentStoragePath;
+          inherit (config) home persistentStoragePath stripHomePrefix;
         };
         filePath = concatPaths [ parentPath config.file ];
         sourcePath = if config.stripHomePrefix then config.file else concatPaths [ parentPath config.file ];

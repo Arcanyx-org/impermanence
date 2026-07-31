@@ -441,7 +441,20 @@ mkDirWithPerms =
                                concatPaths [ dir.home path ]
                              else
                                path;
+                           # With stripHomePrefix the persistent source for a
+                           # parent is the relative path itself, not the
+                           # home-prefixed path. Without it, sourcePath falls
+                           # back to dirPath (home-prefixed) in mkDirWithPerms,
+                           # which would create psp/home/user/<parent>.
+                           sourcePath =
+                             if dir.home != null && dir.stripHomePrefix then
+                               path
+                             else if dir.home != null then
+                               concatPaths [ dir.home path ]
+                             else
+                               path;
                           inherit (dir) persistentStoragePath home enableDebugging;
+                          stripHomePrefix = dir.stripHomePrefix or false;
                           inherit (dir.defaultPerms) user group mode;
                         };
                         # Create new directory items for all parent
